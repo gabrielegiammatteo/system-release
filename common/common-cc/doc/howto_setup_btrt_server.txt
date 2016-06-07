@@ -1,0 +1,113 @@
+BTRT-SERVER
+================================================================================
+Btrt server hosts btrt web application (both production and development versions)
+
+What is needed?
+    - tomcat
+    - d4s-repositories to be mounted in r/w mode
+    
+    
+Create VM script:
+sudo ubuntu-vm-builder kvm hardy --dest 'd4s-btrt' --hostname 'd4s-btrt' --domain 'eng.it' --arch 'i386' --mem '1024'  --rootsize '10240' --addpkg openssh-server --libvirt qemu:///system
+
+
+
+NETWORK CONFIGURATION
+================================================================================
+[TODO] this machine should have grids16.eng.it's ip address
+
+
+
+FILESYSTEM STRUCTURE
+================================================================================
+/home/d4sbtrt/apache-tomcat-6.0.20 --> apache tomcat installation
+/home/d4sbtrt/d4s-sa3-toolkit    --> software developed by ENG for SA3 activities (sync'd via cvs)
+/home/d4sbtrt/repositories
+            |---- recentbuilds  --> remote repository mounted by NFS
+            |---- ft            --> remote repository mounted by NFS
+
+
+Remote nfs directories mounted (extract of /etc/fstab):
+
+grids17.eng.it:/usr/local/d4srecentbuilds   /home/d4sbtrt/repositories/recentbuilds17    nfs rw,hard,intr    0   0
+grids17.eng.it:/usr/local/d4sftrepository   /home/d4sbtrt/repositories/ftrepo17    nfs rw,hard,intr    0   0
+(Pleasee note: you need to accordingly configure the nfs server on grids17 to allow
+this machine to access shared directories)
+
+
+
+USERS
+================================================================================
+
+        |===========|===============|===========|
+        |   user    |   password    | groups    |
+        |===========|===============|===========|
+        |root       |     n.d.      |           |
+        |-----------|---------------|-----------|
+        |d4sbtrt    |  p0nt3g4l3r14 |  admin    |         
+        |-----------|---------------|-----------|
+
+ATTENTION!!!: the virtual machine is created with the defaul user ubuntu/ubuntu
+You should use that account to create the configuration described above and then
+delete ubuntu user. Remind to DELETE ubuntu user!!!
+
+There are two user: 
+  - root       --> root user. The root user login is disabled (as usual in ubuntu)
+  - d4sbuilder --> It belongs to admin group
+  
+
+INSTALLING SOFTWARE
+============================================
+Install additional packages
+------------------------------------
+* #sudo aptitude install nano
+* enable multiverse repository in /etc/apt/sources.list
+* #sudo aptitude update
+* #sudo aptitude install cvs nfs-client
+
+
+REMOVING SERVICES
+===========================================
+* #sudo update-rc.d -f dbus remove
+* #sudo update-rc.d -f avahi-daemon remove
+
+
+INSTALL d4s-sa3-toolkit
+============================================
+[see how_to_setup_d4s_build_server.txt document]
+
+
+TOMCAT installation
+====================================================
+downlaod tomcat and untar it in d4sbtrt home
+* #wget http://apache.fis.uniroma2.it/tomcat/tomcat-6/v6.0.20/bin/apache-tomcat-6.0.20.tar.gz
+* #tar xzvf apache-tomcat-6.0.20.tar.gz
+
+* configuration:
+  - bind tomcat to port 80 instead of 8080 (modify conf/server.xml)
+
+  - comment this line: 
+        <Connector port="8009" protocol="AJP/1.3" redirectPort="8443" />
+    
+  - enable admin user. Add these lines to tomcat-users.xml
+        <role rolename="manager"/>
+        <user username="btrtmanager" password="G87AI79J9QQsLU3FeXWYh0" roles="manager"/>
+
+* access to manager web application and undeploy all unuseful application (all but /manager)
+
+
+Attention: using port 80 require root privlieges, thus tomcat has to be launched 
+with sudo
+
+
+BTRT INSTALLATION
+===================================================
+BTRT is formed by two main elements:
+    - the web application
+    - a folder that contains some configuration files.
+    
+The web application is deployed using tomcat's manager web application at:
+ http://grids16.eng.it/manager/html
+
+With regards to configuration folder, you can found it in etc/btrt under d4s-sa3-toolkit
+installation directory

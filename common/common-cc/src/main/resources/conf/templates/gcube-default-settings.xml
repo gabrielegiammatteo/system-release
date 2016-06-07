@@ -1,0 +1,66 @@
+<settings xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+ 
+	<servers>
+		<server>
+			<id>gcube-snapshots</id>
+			<username>gcube-user</username>
+			<password>maven</password>
+		</server>
+		<server>
+			<id>gcube-staging</id>
+			<username>********</username>
+			<password>*******</password>
+		</server>
+	</servers>
+ 
+   <proxies>
+    <proxy>
+      <id>eng-proxy</id>
+      <active>false</active>
+      <protocol>http</protocol>
+      <host>proxy-dc-psm.sys</host>
+      <port>8080</port>
+      <nonProxyHosts>localhost|*.esl.eng.it</nonProxyHosts>
+    </proxy>
+  </proxies>
+ 
+ 
+	<profiles>
+		<profile>
+			<id>gcube</id>
+			<repositories>
+				<repository>
+					<id>gcube-externals</id>
+					<name>gCube Externals</name>
+					<url>http://maven.research-infrastructures.eu/nexus/content/repositories/gcube-externals</url>
+					<snapshots>
+						<enabled>false</enabled>
+					</snapshots>
+					<releases>
+						<enabled>true</enabled>
+					</releases>
+				</repository>
+			</repositories>
+ 
+			<pluginRepositories>
+				<pluginRepository>
+					<id>gcube-externals</id>
+					<name>gCube Externals</name>
+					<url>http://maven.research-infrastructures.eu/nexus/content/repositories/gcube-externals</url>
+					<snapshots>
+						<enabled>false</enabled>
+					</snapshots>
+					<releases>
+						<enabled>true</enabled>
+					</releases>
+				</pluginRepository>
+			</pluginRepositories>
+ 
+		</profile>
+	</profiles>
+ 
+	<activeProfiles>
+		<activeProfile>gcube</activeProfile>
+	</activeProfiles>
+</settings>

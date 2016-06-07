@@ -1,0 +1,116 @@
+#!/bin/bash
+#
+# gcube-release-toolkit
+#
+# Authors:
+#     Gabriele Giammatteo [gabriele.giammatteo@eng.it]
+#  
+# 2012
+# ------------------------------------------------------------------------------
+#
+# This script contains a configuration, settings, and functions needed
+# by other gcube-release-toolkit scripts
+# 
+# This file is sourced at the beginning of each scripts.
+#
+
+
+###########################################################################
+# Please set the GCUBE_RELEASE_TOOLKIT_HOME environment variable first!!! #
+# and make sure that ulimit is appropriate (see end of this file)         #
+#                                                                         #
+###########################################################################
+
+
+
+################################################################################
+# user configuration                                                           #
+#                                                                              #
+################################################################################
+
+##etics configuration
+export ETICS_HOME=/opt/etics
+export ETICS_WORKSPACE=/home/gbuilder/workspace
+export PATH=$ETICS_HOME/bin:$PATH
+export ETICS_CUSTOM_CONF=$GCUBE_RELEASE_TOOLKIT_HOME/etc/etics.conf
+export ETICS_CHECKOUT_OPTS="-pskipqa=True"
+export ETICS_BUILD_OPTS="-pskipqa=True -e \"MAVEN_OPTS=-Xmx2g\""
+export ETICS_WS_ENDPOINT=http://etics.esl.eng.it/etics-buildsystem-ws/services/BuildSystemService
+
+export ETICS_GCUBE_ISSUE_CRAWLERS="$GCUBE_RELEASE_TOOLKIT_HOME/lib/etics-gcube-crawlers"
+
+#override default etics platoform
+# see --platform option of etics-checkout and etics-build
+# if not set, the machine platform calculated by ETICS will be used
+export ETICS_BUILD_PLATFORM=sl5_x86_64_gcc412
+
+
+##distribution
+export GLOBUS_LOCATION=/home/gbuilder/dist-gCore
+export development_SG=http://node4.d.d4science.research-infrastructures.eu:8080/wsrf/services/gcube/vremanagement/softwaregateway/Registration
+export development_SCOPE=/gcube/devsec
+export candidate_SG=http://bluebridge.esl.eng.it/wsrf/services/gcube/vremanagement/softwaregateway/Registration
+export candidate_SCOPE=/d4s
+export release_SG=http://node11.p.d4science.research-infrastructures.eu:8080/wsrf/services/gcube/vremanagement/softwaregateway/Registration
+export release_SCOPE=/d4science.research-infrastructures.eu
+
+export GITHUB_RELEASE_FOLDER=/home/gbuilder/test
+
+
+##deployment test configuration
+export DT_SCOPE=/testing
+export DT_DELAY=600
+export DT_RM_HOST=im-seahorse
+export DT_RM_PORT=8080 
+export DT_WORKSPACE=/home/gbuilder/dt_workspace
+export DT_PORT=8080
+
+
+
+
+##build repository configuration
+export LOCAL_REPOSITORY=/opt/buildrepo
+
+
+##optional: TaskTracker integration (without trailing "/")
+#export TT_TRACKER=http://etics.eng.it/dev/tasktracker/rest/trackers/etics.eng
+export NMI_etics_platform=$ETICS_BUILD_PLATFORM
+
+
+
+################################################################################
+# gcube-release-toolkit environment                                            #
+#                                                                              #
+################################################################################
+export TMP_DIR=/tmp/gcube-release-toolkit
+
+#generate java classpath (e.g. see generate-packages-report.sh script)
+JAVA_CP="."
+for i in `ls ${GCUBE_RELEASE_TOOLKIT_HOME}/lib/java/*.jar`
+do
+  JAVA_CP=${JAVA_CP}:${i}
+done
+
+#etc included to include log4j.properties file
+JAVA_CP=${JAVA_CP}:${GCUBE_RELEASE_TOOLKIT_HOME}/etc
+
+export JAVA_CP
+
+
+
+
+################################################################################
+# internal  bootstrap commands                                                 #
+#                                                                              #
+################################################################################
+
+
+if [ ! -d "$TMP_DIR" ]
+then
+    mkdir -p $TMP_DIR
+fi
+
+#increase number of open file. 
+# please set hard limit in /etc/security/limits.conf
+# gbuilder        hard    nofile          10000
+ulimit -n 10000
