@@ -1,0 +1,215 @@
+This document explains what a d4s-build-server is and how-to create one of it.
+
+BuildServer (BS)
+================================================================================
+BS Duties:
+ * perform d4science software builds on daily basis (both for HEAD and release configurations)
+ * fetch periodically functional and deployment tests reports
+
+
+BS server is a KVM virtual machine running Ubuntu 8.04
+
+BS machine "hardware" specifications:
+    - cpu: [host cpu]
+    - ram: 1.5GB
+    - hdd: 15GB
+
+
+Create the KVM image command:
+
+sudo ubuntu-vm-builder kvm hardy --dest 'd4s-bs2' --hostname 'd4s-bs2' --domain 'eng.it' --arch 'i386' --mem '1536'  --rootsize '15360' --addpkg openssh-server --libvirt qemu:///system
+
+
+NETWORK CONFIGURATION
+================================================================================
+The virtual machine hosting build server is configurated to access internet via 
+natting. This means the host machine set up an internal virtual lan and nats all
+packets coming from/to virtual machine. 
+
+Accessing in SSH
+----------------------------
+The network configuration implied that to access the build server, you need to 
+access to the host machine and then enter in ssh to build server using private
+ip of virtual machine hosting it. [TODO: How to find ip address?? virt-manager] 
+
+USERS
+================================================================================
+
+        |===========|===============|===========|
+        |   user    |   password    | groups    |
+        |===========|===============|===========|
+        |root       |     n.d.      |           |
+        |-----------|---------------|-----------|
+        |d4sbuilder | pliz_rebuild  |  admin    |         
+        |-----------|---------------|-----------|
+
+ATTENTION!!!: the virtual machine is created with the defaul user ubuntu/ubuntu
+You should use that account to create the configuration described above and then
+delete ubuntu user
+
+There are two user: 
+  - root       --> root user. The root user login is disabled (as usual in ubuntu)
+  - d4sbuilder --> It belongs to admin group
+
+
+
+FILESYSTEM STRUCTURE
+================================================================================
+
+/home/d4sbuilder/d4s-sa3-toolkit    --> software developed by ENG for SA3 activities (sync'd via cvs)
+/home/d4sbuilder/etics          --> the etics client (v 1.4.9-1)
+/home/d4sbuilder/etics_workspace        --> directory where etics will execute builds
+/home/d4sbuilder/repositories
+            |---- recentbuilds  --> remote repository mounted by NFS
+            |---- ft            --> remote repository mounted by NFS
+            |---- test          --> local repository only for testing purpose
+
+add to /etc/fstab:
+grids17.eng.it:/usr/local/d4srecentbuilds   /home/d4sbuilder/repositories/recentbuilds17    nfs rw,hard,intr    0   0
+grids17.eng.it:/usr/local/d4sftrepository   /home/d4sbuilder/repositories/ftrepo17    nfs rw,hard,intr    0   0
+(Please note: you need to accordingly configure the nfs server on grids17 to allow
+this machine to access shared directories: login and modify /etc/exports. Change /etc/hosts.allow. Restart nfs)
+
+
+SYSTEM CONFIGURATION
+================================================================================
+
+Install additional packages
+------------------------------------
+* #sudo aptitude install nano
+* enable multiverse repository in /etc/apt/sources.list
+* #sudo aptitude update
+
+sudo aptitude install unzip cvs wget chrpath xsltproc debhelper exim4-config exim4-daemon-light man openssl python-dev python-openssl flex gcc build-essential fakeroot subversion sun-java5-jre nfs-client
+
+
+
+Syntax Highlight in nano
+------------------------------------
+create file /home/d4sbuilder/.nanorc containing
+include "/usr/share/nano/sh.nanorc"
+include "/usr/share/nano/java.nanorc"
+include "/usr/share/nano/patch.nanorc"
+include "/usr/share/nano/python.nanorc"
+include "/usr/share/nano/html.nanorc"
+include "/usr/share/nano/perl.nanorc"
+include "/usr/share/nano/ruby.nanorc"
+
+
+Date and Time synchronization
+------------------------------------
+* Clock synchronization is realized via KVM (host and guest clocks are linked in some way)
+* Date is kept synchronized by a daily cron job (/etc/cron.daily/keep_time) that run ntpdata-debian
+  
+create the file /etc/cron.daily/keep_time containing:
+#!/bin/sh
+ntpdate-debian > /dev/null
+
+make it executable
+
+
+Set Bash as default shell
+-----------------------------------
+the default sh shell in ubuntu is dash instead of the unix default bash. 
+Since some d4s components have scripts that works only in bash, the default shell needs to be changed in bash.
+Make the symbolic link /bin/sh pointing at /bin/bash
+
+sudo ln -s /bin/dash /bin/sh.old && sudo rm /bin/sh && sudo ln -s /bin/bash /bin/sh
+
+
+
+
+
+
+
+
+
+
+
+SERVICES
+================================================================================
+Following services (and only them) are configured and running in BS:
+
+
+CRON:
+* execute "crontab -e"
+* your crontab should appear like the follow snippet:
+
+----------------------------------------------------------------------
+MAILTO=gabriele.giammatteo@eng.it
+# m h  dom mon dow   command
+00 00 * * * D4S_SA3_TOOLKIT_HOME=/home/d4sbuilder/d4s-sa3-toolkit /home/d4sbuilder/d4s-sa3-toolkit/bin/run-scheduled-builds.sh
+
+#hourly look for new ft/deployment/vre testing reports
+00 * * * * D4S_SA3_TOOLKIT_HOME=/home/d4sbuilder/d4s-sa3-toolkit /home/d4sbuilder/d4s-sa3-toolkit/bin/report-fetcher.sh -fdv -q
+----------------------------------------------------------------------
+
+
+
+EXIM: 
+    In order to make cron able to send email, exim has to be configured to work
+    with eng smtp server. Please follow below steps:
+    
+    Run dpkg-reconfigure exim4-config
+
+    * Choose mail sent by smarthost; received via SMTP or fetchmail
+    * Type System Mail Name: e.g. d4s-bs1.eng.it
+    * Type IP Adresses to listen on for incoming SMTP connections: 127.0.0.1
+    * Leave Other destinations for which mail is accepted blank
+    * Leave Machines to relay mail for: blank
+    * Type Machine handling outgoing mail for this host (smarthost): smtp.eng.it::25        
+    * Choose NO, don’t hide local mail name in outgoing mail.
+    * Chose NO, don’t keep number of DNS-queries minimal (Dial-on-Demand).
+    * Choose mbox
+    * Choose NO, split configuration into small files
+    * Mail for postmaster. Type d4sbuilder
+
+    [source: http://www.manu-j.com/blog/wordpress-exim4-ubuntu-gmail-smtp/75/]
+    
+    To test configuration type:
+    #  mail gabriele.giammatteo@eng.it
+
+
+SOFTWARE PLATFORM
+===============================================================================
+
+Etics Client
+--------------------------------------------------------------------------------
+#cd /home/d4sbuilder
+#mkdir etics && cd etics
+#wget "http://eticssoft.web.cern.ch/eticssoft/repository/etics-client-setup.py" -O etics-client-setup
+#python etics-client-setup
+
+Modify /home/d4sbuilder/.bashrc adding:
+export ETICS_HOME=/home/d4sbuilder/etics/etics
+export PATH=$ETICS_HOME/bin:$PATH
+
+source new .bashrc
+
+
+[source: https://twiki.cern.ch/twiki/bin/view/ETICS/ClientHowTo]
+
+
+
+d4s-sa3-toolkit [obsolete]
+--------------------------------------------------------------------------------
+d4s-sa3-toolkit is manteined in the gauss.eng.it cvs server. In order to install it
+just checkout it from cvs. In /home/d4sbuilder type:
+
+# export CVSROOT=:pserver:fabriani@gauss.eng.it:/usr/local/cvsrepositories/diligent
+# cvs login [type "dilipasswd"]
+# cvs co d4s-sa3-toolkit
+
+Now in /home/d4sbuilder/d4s-sa4-toolkit you have the latest version of
+d4s-sar-toolkit. Please keep the software synchronized with cvs repository.
+
+Configuration:
+# nano -w .bashrc
+add following lines:
+export D4S_SA3_TOOLKIT_HOME=/home/d4sbuilder/d4s-sa3-toolkit
+export PATH=$D4S_SA3_TOOLKIT_HOME/bin:$PATH
+
+#source .bashrc
+
+Customize installation modifying /home/d4sbuilder/d4s-sa3-toolkit/etc/bootstrap.sh
+file

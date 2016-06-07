@@ -1,0 +1,54 @@
+<assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
+  <id>bashcli</id>
+  <formats>
+    <format>tar.gz</format>
+  </formats>
+  <includeBaseDirectory>false</includeBaseDirectory>
+  <dependencySets>
+  <!-- see here http://www.sonatype.com/books/mvnref-book/reference/assemblies-sect-output-algorithm.html -->
+  	<dependencySet>
+  		<useProjectArtifact>true</useProjectArtifact>
+  		<outputDirectory>/gcube-release-toolkit/lib/java</outputDirectory>
+  	</dependencySet>
+  </dependencySets>
+  <fileSets>
+<!--   	<fileSet>
+  		<directory>target</directory>
+  		<includes>
+  			<include>${build.finalName}.jar</include>
+  		</includes>
+  		<outputDirectory>/gcube-release-toolkit/lib/java</outputDirectory>
+  	</fileSet> -->
+  	<fileSet>
+  		<directory>src/main/resources/conf/templates</directory>
+  		<includes>
+  			<include>*.template</include>
+  		</includes>
+  		<outputDirectory>/gcube-release-toolkit/etc</outputDirectory>
+  	</fileSet>
+   	<fileSet>
+  		<directory>src/main/resources/conf</directory>
+  		<includes>
+  			<include>modulemappings.properties</include>
+  			<include>moduleskiplist</include>
+  		</includes>
+  		<outputDirectory>/gcube-release-toolkit/etc</outputDirectory>
+  	</fileSet>
+   	<fileSet>
+  		<directory>src/main/resources/btrt</directory>
+  		<includes>
+  			<include>*</include>
+  		</includes>
+  		<outputDirectory>/gcube-release-toolkit/etc/btrt</outputDirectory>
+  	</fileSet>
+  	<fileSet>
+  		<directory>src/main/scripts</directory>
+  		<includes>
+  			<include>**/*</include>
+  		</includes>
+  		<outputDirectory>/gcube-release-toolkit</outputDirectory>
+  	</fileSet>
+  </fileSets>
+</assembly>

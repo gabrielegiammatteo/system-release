@@ -1,0 +1,13 @@
+#
+#
+# each line starting with # is considerated a comment and dropped
+#
+#
+# Each line specify a scheduled build in the form:
+# [project-name] [project-configuration]
+#
+
+org.gcube org.gcube.HEAD
+org.gcore org.gcore.HEAD
+
+org.gcube org.gcube.1-7-0

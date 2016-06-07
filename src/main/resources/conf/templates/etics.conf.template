@@ -1,0 +1,6 @@
+[system]
+server=etics.esl.eng.it
+repositoryServer=etics.esl.eng.it
+rest_server=http://etics.esl.eng.it/etics-restful-api/rest
+protocol=http
+port=80
