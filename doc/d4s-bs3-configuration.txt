@@ -1,2 +1,0 @@
-user: d4sbuilder
-pass: pliz_rebuild2
